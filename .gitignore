@@ -1,3 +1,4 @@
+data/
 test/
 __pycache__/
 *.tmp

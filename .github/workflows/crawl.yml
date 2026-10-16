@@ -2,7 +2,7 @@ name: Ladeauslastung abfragen
 
 on:
   schedule:
-    - cron: "7,37 * * * *"   # alle 30 Minuten (UTC); GitHub startet geplante Läufe oft einige Minuten später
+    - cron: "4,19,34,49 * * * *"   # alle 15 Minuten (UTC); GitHub startet geplante Läufe oft einige Minuten später
   workflow_dispatch: {}
 
 permissions:
@@ -15,20 +15,31 @@ concurrency:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Daten-Branch holen
+        run: |
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git clone -q --depth 1 --branch data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+          else
+            mkdir data && git -C data init -q -b data
+            git -C data remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Abfrage
         run: python3 crawl.py
-      - name: Ergebnis speichern
+      - name: Ergebnis speichern (ohne Historie)
+        working-directory: data
         run: |
           git config user.name "ladeauslastung-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add live agg events state
-          if git diff --cached --quiet; then echo "keine Änderung"; exit 0; fi
-          git commit -q -m "Abfrage $(date -u +%Y-%m-%dT%H:%MZ)"
-          for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 5; done
-          exit 1
+          git add -A
+          if git rev-parse -q --verify HEAD >/dev/null; then
+            git commit -q --amend -m "Stand $(date -u +%Y-%m-%dT%H:%MZ)"
+          else
+            git commit -q -m "Stand $(date -u +%Y-%m-%dT%H:%MZ)"
+          fi
+          git push -q --force origin data
