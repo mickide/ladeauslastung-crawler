@@ -1,0 +1,5 @@
+[
+  {"id": "AH-BY-ILL", "name": "Autohof Illertissen", "bab": "A 7", "kva2035": null, "lat": 48.219225, "lon": 10.127003, "radius": 300, "locIds": ["315359", "318454", "321017"]},
+  {"id": "DE-BY-000318", "name": "Holzkirchen-Süd", "bab": "A 8", "kva2035": 3520, "lat": 47.9064508, "lon": 11.7173169, "radius": 1000, "locIds": []},
+  {"id": "DE-SL-000017", "name": "Goldene Bremm Süd", "bab": "A 6", "kva2035": 3960, "lat": 49.208318, "lon": 6.967778, "radius": 1000, "locIds": []}
+]
