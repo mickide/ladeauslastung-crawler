@@ -113,7 +113,7 @@ def run_site(site, now_min, fixture=None):
     state = load(state_p, {})
     agg = Agg(site["id"])
     live = {"site": site["id"], "t": now_min, "ts": local(now_min).isoformat(), "locs": []}
-    events, occ_now, new_state = [], {}, {}
+    events, occ_now, new_state, ops_today = [], {}, {}, {}
     for l in locs:
         op = (l.get("operator") or {}).get("name") or "unbekannt"
         lv = {"id": l["id"], "op": op, "name": l.get("name") or l.get("address") or "", "e": []}
@@ -144,8 +144,13 @@ def run_site(site, now_min, fixture=None):
             if st in OCC:
                 occ_now[op] = occ_now.get(op, 0) + 1
         live["locs"].append(lv)
-        day = agg.day(local(now_min).strftime("%Y-%m-%d"))
-        day["ops"][op] = {"lp": len(lv["e"]), "kw": sum(x[1] for x in lv["e"]), "name": lv["name"]}
+        ops_today.setdefault(op, {"lp": 0, "kw": 0, "name": []})
+        ops_today[op]["lp"] += len(lv["e"])
+        ops_today[op]["kw"] += sum(x[1] for x in lv["e"])
+        ops_today[op]["name"].append(lv["name"])
+    day = agg.day(local(now_min).strftime("%Y-%m-%d"))
+    for op, v in ops_today.items():
+        day["ops"][op] = {"lp": v["lp"], "kw": v["kw"], "name": " / ".join(v["name"])}
     for op in {x["op"] for x in live["locs"]}:
         c = agg.cell(now_min - 1, op)
         c[4] = max(c[4], occ_now.get(op, 0))
